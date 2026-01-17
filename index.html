@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enigma's Echo - Library</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
+    <style>
+        :root { --primary: #2c3e50; --paper: #fdfaf1; --accent: #27ae60; }
+        body { font-family: 'Segoe UI', sans-serif; background: #d1d8e0; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .main-container { display: flex; height: 100%; width: 100%; }
+
+        /* Sidebar/Admin Panel */
+        .admin-panel { width: 320px; background: white; padding: 20px; box-shadow: 5px 0 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 10px; z-index: 1000; overflow-y: auto; }
+        .book-list-item { background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 5px; border-left: 4px solid var(--primary); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+
+        /* Viewer Area */
+        .viewer-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; perspective: 1500px; padding: 15px; position: relative; }
+        .book-container { width: 100%; max-width: 380px; height: 70vh; position: relative; transform-style: preserve-3d; }
+
+        .page { width: 100%; height: 100%; position: absolute; background: var(--paper); padding: 25px; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: transform 0.8s ease-in-out; transform-origin: left; backface-visibility: hidden; border-radius: 5px 15px 15px 5px; overflow-y: auto; }
+        .page.flipped { transform: rotateY(-180deg); }
+        .cover { background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; z-index: 100; }
+        .end-page { background: var(--paper); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+
+        /* Controls */
+        .nav-controls { display: flex; align-items: center; gap: 30px; margin-top: 20px; z-index: 2000; }
+        .nav-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-size: 18px; }
+        .page-counter { font-weight: bold; color: var(--primary); }
+
+        button { padding: 10px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-new { background: var(--accent); color: white; }
+        .btn-add-page { background: var(--primary); color: white; }
+        
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; overflow-y: auto; }
+            .admin-panel { width: 100%; order: 2; }
+            .viewer-area { order: 1; min-height: 80vh; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="admin-panel" id="adminPanel">
+        <h2 style="margin:0;">Library</h2>
+        <p style="font-size: 12px; color: #666;">Developer: MD.Mahiuzzaman Riyad</p>
+        
+        <button class="btn-new" onclick="createNewBook()">+ Add New Book</button>
+        <hr style="width:100%">
+        
+        <div id="editorSection">
+            <h4>Editor (Current Book)</h4>
+            <input type="text" id="pageTitle" placeholder="Chapter Title" style="width:100%; padding:8px; margin-bottom:5px;">
+            <textarea id="pageContent" rows="4" placeholder="Text content..." style="width:100%; padding:8px; margin-bottom:5px;"></textarea>
+            <button class="btn-add-page" onclick="pushToCloud()">Add Page to Book</button>
+        </div>
+
+        <hr style="width:100%">
+        <h4>Your Added Books</h4>
+        <div id="myBooksList"></div>
+    </div>
+
+    <div class="viewer-area">
+        <div class="book-container" id="book">
+            <div class="page cover" id="page-0">
+                <h1>Enigma's Echo</h1>
+                <p id="bookDisplayTitle">Select or Create a Book</p>
+                <small>Use Arrows to Flip</small>
+            </div>
+        </div>
+
+        <div class="nav-controls">
+            <button class="nav-btn" onclick="prevPage()">←</button>
+            <div class="page-counter" id="pageCounter">0 / 0</div>
+            <button class="nav-btn" onclick="nextPage()">→</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAHb1Zifpb1d48j-hmf4Py4XZEOzEnKx64",
+  authDomain: "my-digital-85852.firebaseapp.com",
+  databaseURL: "https://my-digital-85852-default-rtdb.firebaseio.com",
+  projectId: "my-digital-85852",
+  storageBucket: "my-digital-85852.firebasestorage.app",
+  messagingSenderId: "865378510703",
+  appId: "1:865378510703:web:0e3e9a61311ff8bd60ea9a"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const urlParams = new URLSearchParams(window.location.search);
+    let bookId = urlParams.get('id');
+    let currentPageIndex = 0;
+    let totalPages = 1;
+
+    // 2. LocalStorage এ বইয়ের লিস্ট রাখা
+    let savedBooks = JSON.parse(localStorage.getItem('enigma_library')) || [];
+
+    function init() {
+        if(bookId) {
+            loadBook(bookId);
+            if(!savedBooks.includes(bookId)) {
+                savedBooks.push(bookId);
+                localStorage.setItem('enigma_library', JSON.stringify(savedBooks));
+            }
+        }
+        renderLibraryList();
+    }
+
+    function loadBook(id) {
+        bookId = id;
+        document.getElementById('bookDisplayTitle').innerText = "Book ID: " + id;
+        firebase.database().ref('all_books/' + id).on('value', (snapshot) => {
+            renderBookContent(snapshot.val());
+        });
+    }
+
+    function renderBookContent(data) {
+        const book = document.getElementById('book');
+        const oldPages = book.querySelectorAll('.cloud-page, .end-page');
+        oldPages.forEach(p => p.remove());
+
+        let index = 1;
+        if(data) {
+            for(let key in data) {
+                const p = data[key];
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'page cloud-page';
+                pageDiv.id = `page-${index}`;
+                pageDiv.style.zIndex = 100 - index;
+                pageDiv.innerHTML = `<h3>${p.title}</h3><hr><p>${p.content.replace(/\n/g, '<br>')}</p><small style="position:absolute;bottom:10px;">Page ${index}</small>`;
+                book.appendChild(pageDiv);
+                index++;
+            }
+        }
+
+        const endPage = document.createElement('div');
+        endPage.className = 'page end-page';
+        endPage.id = `page-${index}`;
+        endPage.style.zIndex = 100 - index;
+        endPage.innerHTML = `<h2>FINISH</h2><p>Thanks for reading me!</p><small>Enigma's Echo</small>`;
+        book.appendChild(endPage);
+
+        totalPages = index + 1;
+        updateCounter();
+    }
+
+    function createNewBook() {
+        const newId = prompt("Enter Book Name/ID (English):") || 'book_' + Math.random().toString(36).substr(2, 5);
+        window.location.href = window.location.pathname + "?id=" + newId;
+    }
+
+    function pushToCloud() {
+        const title = document.getElementById('pageTitle').value;
+        const content = document.getElementById('pageContent').value;
+        if(!bookId) return alert("Create a book first!");
+        if(title && content) {
+            firebase.database().ref('all_books/' + bookId).push({ title, content });
+            document.getElementById('pageTitle').value = "";
+            document.getElementById('pageContent').value = "";
+        }
+    }
+
+    function renderLibraryList() {
+        const listDiv = document.getElementById('myBooksList');
+        listDiv.innerHTML = "";
+        savedBooks.forEach(id => {
+            listDiv.innerHTML += `
+                <div class="book-list-item">
+                    <span onclick="window.location.href='?id=${id}'" style="cursor:pointer; font-weight:bold;">${id}</span>
+                    <button onclick="copyLink('${id}')" style="font-size:10px; background:#ddd;">Share</button>
+                </div>`;
+        });
+    }
+
+    function copyLink(id) {
+        const link = window.location.origin + window.location.pathname + "?id=" + id + "&view";
+        navigator.clipboard.writeText(link).then(() => alert("Share Link Copied!"));
+    }
+
+    // Navigation Logic
+    function nextPage() {
+        if (currentPageIndex < totalPages - 1) {
+            document.getElementById(`page-${currentPageIndex}`).classList.add('flipped');
+            currentPageIndex++;
+            updateCounter();
+        }
+    }
+
+    function prevPage() {
+        if (currentPageIndex > 0) {
+            currentPageIndex--;
+            document.getElementById(`page-${currentPageIndex}`).classList.remove('flipped');
+            updateCounter();
+        }
+    }
+
+    function updateCounter() {
+        document.getElementById('pageCounter').innerText = `${currentPageIndex + 1} / ${totalPages}`;
+    }
+
+    if (urlParams.has('view')) { document.getElementById('adminPanel').style.display = 'none'; }
+    
+    init();
+</script>
+</body>
+</html>
