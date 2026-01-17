@@ -17,30 +17,29 @@
         .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #7f8c8d; border-bottom: 3px solid transparent; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: #f8fafc; }
 
-        .panel-container { background: white; padding: 15px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 40vh; overflow-y: auto; }
+        .panel-container { background: white; padding: 15px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 45vh; overflow-y: auto; }
         .panel-container.active { display: block; }
 
-        /* Viewer */
+        /* Viewer Area */
         .viewer-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; perspective: 1500px; padding: 10px; position: relative; }
-        .book-container { width: 100%; max-width: 380px; height: 60vh; position: relative; transform-style: preserve-3d; }
-        .page { width: 100%; height: 100%; position: absolute; background: var(--paper); padding: 25px; box-sizing: border-box; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: transform 0.8s ease-in-out; transform-origin: left; backface-visibility: hidden; border-radius: 5px 15px 15px 5px; overflow-y: auto; }
+        .book-container { width: 100%; max-width: 380px; height: 55vh; position: relative; transform-style: preserve-3d; }
+        .page { width: 100%; height: 100%; position: absolute; background: var(--paper); padding: 25px; box-sizing: border-box; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: transform 0.6s ease-in-out; transform-origin: left; backface-visibility: hidden; border-radius: 5px 15px 15px 5px; overflow-y: auto; }
         .page.flipped { transform: rotateY(-180deg); }
         .cover { background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; z-index: 100; }
 
-        /* Navigation */
-        .nav-controls { display: flex; align-items: center; gap: 40px; margin-top: 20px; }
+        /* Navigation Controls */
+        .nav-controls { display: flex; align-items: center; gap: 40px; margin: 15px 0; }
         .nav-btn { background: white; color: var(--primary); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .page-counter { font-weight: bold; color: var(--primary); background: white; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
 
-        /* Library List Items */
-        .book-item { background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 8px; }
-        .book-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; }
-        .book-actions { display: flex; gap: 5px; }
+        /* Input & Buttons */
+        input, textarea, button.main-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-family: inherit; }
+        button.main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .book-item { background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 5px solid var(--primary); }
+        .book-actions { display: flex; gap: 5px; margin-top: 8px; }
         .action-btn-small { flex: 1; padding: 6px; font-size: 11px; border: none; border-radius: 4px; color: white; cursor: pointer; }
 
-        input, textarea, button.main-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        button.main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        
+        /* Hide Admin UI in View Mode */
         .view-mode .tabs, .view-mode .panel-container { display: none !important; }
     </style>
 </head>
@@ -49,20 +48,21 @@
 <audio id="flipSound" src="https://www.soundjay.com/misc/sounds/paper-flip-1.mp3" preload="auto"></audio>
 
 <div class="tabs" id="mainTabs">
-    <div class="tab active" onclick="showPanel('writePanel', this)">Write</div>
+    <div class="tab active" onclick="showPanel('writePanel', this)">Write Page</div>
     <div class="tab" onclick="showPanel('newPanel', this)">New Book</div>
-    <div class="tab" onclick="showPanel('libPanel', this)">My Library</div>
+    <div class="tab" onclick="showPanel('libPanel', this)">Library</div>
 </div>
 
 <div id="writePanel" class="panel-container active">
+    <p id="currentBookLabel" style="font-weight: bold; color: var(--accent); margin: 0;">Current: None</p>
     <input type="text" id="pageTitle" placeholder="Chapter Title">
-    <textarea id="pageContent" rows="3" placeholder="Write page content..."></textarea>
-    <button class="main-btn" onclick="pushPage()">Add Page</button>
+    <textarea id="pageContent" rows="3" placeholder="Write page content here..."></textarea>
+    <button class="main-btn" onclick="pushPage()">Add Page to Book</button>
 </div>
 
 <div id="newPanel" class="panel-container">
-    <input type="text" id="newBookId" placeholder="Unique Book Name (e.g. MyStory2026)">
-    <button class="main-btn" style="background: var(--success);" onclick="createBook()">Create Book</button>
+    <input type="text" id="newBookId" placeholder="Book Name (No spaces, e.g. MyJournal)">
+    <button class="main-btn" style="background: var(--success);" onclick="createBook()">Create & Open Book</button>
 </div>
 
 <div id="libPanel" class="panel-container">
@@ -73,10 +73,11 @@
     <div class="book-container" id="book">
         <div class="page cover" id="page-0">
             <h2 id="displayTitle">Enigma's Echo</h2>
-            <p>Digital Library</p>
-            <small>Tap Arrows to Flip</small>
+            <p>Digital Cloud Library</p>
+            <small>Create or Select a Book to Start</small>
         </div>
     </div>
+    
     <div class="nav-controls">
         <button class="nav-btn" onclick="prevPage()">❮</button>
         <div class="page-counter" id="pageCounter">1 / 1</div>
@@ -85,7 +86,7 @@
 </div>
 
 <script>
-    // Your web app's Firebase configuration
+  // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAHb1Zifpb1d48j-hmf4Py4XZEOzEnKx64",
   authDomain: "my-digital-85852.firebaseapp.com",
@@ -97,25 +98,26 @@ const firebaseConfig = {
 };
 
     firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     const urlParams = new URLSearchParams(window.location.search);
     let bookId = urlParams.get('id');
     let currentPage = 0, totalPages = 1;
-    let myBooks = JSON.parse(localStorage.getItem('riyan_lib_v3')) || [];
+    let myBooks = JSON.parse(localStorage.getItem('riyan_lib_v4')) || [];
 
     function init() {
         if(bookId) {
+            document.getElementById('currentBookLabel').innerText = "Current Book: " + bookId;
             document.getElementById('displayTitle').innerText = bookId;
             loadBook(bookId);
             if(!myBooks.includes(bookId)) {
                 myBooks.push(bookId);
-                localStorage.setItem('riyan_lib_v3', JSON.stringify(myBooks));
+                localStorage.setItem('riyan_lib_v4', JSON.stringify(myBooks));
             }
         }
         renderLibrary();
         if(urlParams.has('view')) document.body.classList.add('view-mode');
     }
-
-    function playFlip() { document.getElementById('flipSound').play(); }
 
     function showPanel(id, el) {
         document.querySelectorAll('.panel-container, .tab').forEach(x => x.classList.remove('active'));
@@ -124,61 +126,85 @@ const firebaseConfig = {
     }
 
     function loadBook(id) {
-        firebase.database().ref('all_books/' + id).on('value', (snap) => {
+        database.ref('all_books/' + id).on('value', (snap) => {
             const data = snap.val();
-            const book = document.getElementById('book');
-            book.querySelectorAll('.cloud-page, .end-page').forEach(p => p.remove());
+            const bookContainer = document.getElementById('book');
+            bookContainer.querySelectorAll('.cloud-page, .end-page').forEach(p => p.remove());
+            
             let i = 1;
             if(data) {
-                for(let k in data) {
-                    const d = data[k];
+                for(let key in data) {
+                    const d = data[key];
                     const div = document.createElement('div');
                     div.className = 'page cloud-page';
                     div.id = `page-${i}`;
-                    div.style.zIndex = 200 - i;
-                    div.innerHTML = `<h3>${d.title}</h3><hr><p>${d.content.replace(/\n/g,'<br>')}</p>`;
-                    book.appendChild(div);
+                    div.style.zIndex = 500 - i;
+                    div.innerHTML = `<h3>${d.title}</h3><hr><p>${d.content.replace(/\n/g,'<br>')}</p><small style="position:absolute; bottom:15px;">Page ${i}</small>`;
+                    bookContainer.appendChild(div);
                     i++;
                 }
             }
+            // End Page
             const end = document.createElement('div');
             end.className = 'page end-page';
             end.id = `page-${i}`;
-            end.style.zIndex = 200 - i;
-            end.innerHTML = `<h2>FINISH</h2><p>Thanks for reading!</p>`;
-            book.appendChild(end);
+            end.style.zIndex = 500 - i;
+            end.innerHTML = `<div style="text-align:center; margin-top:50%;"><h2>FINISH</h2><p>Thanks for reading!</p><strong>Enigma's Echo</strong></div>`;
+            bookContainer.appendChild(end);
+            
             totalPages = i + 1;
-            updateUI();
+            updateCounter();
         });
     }
 
     function pushPage() {
-        const t = document.getElementById('pageTitle').value;
-        const c = document.getElementById('pageContent').value;
-        if(!bookId) return alert("Select a book first!");
-        if(t && c) {
-            firebase.database().ref('all_books/' + bookId).push({ title: t, content: c });
+        const title = document.getElementById('pageTitle').value.trim();
+        const content = document.getElementById('pageContent').value.trim();
+        
+        if(!bookId) {
+            alert("Please select or create a book first!");
+            return;
+        }
+        
+        if(title === "" || content === "") {
+            alert("Please enter both Title and Content!");
+            return;
+        }
+
+        // ফিক্সড ডাটা পুশিং লজিক
+        database.ref('all_books/' + bookId).push({
+            title: title,
+            content: content,
+            timestamp: Date.now()
+        }).then(() => {
             document.getElementById('pageTitle').value = "";
             document.getElementById('pageContent').value = "";
-        }
+            alert("Page added successfully!");
+        }).catch((error) => {
+            alert("Error adding page: " + error.message);
+        });
     }
 
     function createBook() {
         const name = document.getElementById('newBookId').value.trim().replace(/\s+/g,'_');
-        if(name) window.location.href = window.location.pathname + "?id=" + name;
+        if(name) {
+            window.location.href = window.location.pathname + "?id=" + name;
+        } else {
+            alert("Please enter a valid book name.");
+        }
     }
 
     function renderLibrary() {
         const list = document.getElementById('libList');
-        list.innerHTML = "";
+        list.innerHTML = myBooks.length ? "" : "No books in library.";
         myBooks.forEach(id => {
             list.innerHTML += `
                 <div class="book-item">
-                    <div class="book-info"><span>${id}</span></div>
+                    <strong>${id}</strong>
                     <div class="book-actions">
-                        <button class="action-btn-small" style="background:var(--accent)" onclick="location.href='?id=${id}'">Edit/Open</button>
+                        <button class="action-btn-small" style="background:var(--accent)" onclick="location.href='?id=${id}'">Open/Edit</button>
                         <button class="action-btn-small" style="background:var(--success)" onclick="share('${id}')">Share</button>
-                        <button class="action-btn-small" style="background:var(--danger)" onclick="deleteBook('${id}')">Delete</button>
+                        <button class="action-btn-small" style="background:var(--danger)" onclick="deleteBook('${id}')">Del</button>
                     </div>
                 </div>`;
         });
@@ -186,36 +212,38 @@ const firebaseConfig = {
 
     function share(id) {
         const link = window.location.origin + window.location.pathname + "?id=" + id + "&view";
-        navigator.clipboard.writeText(link).then(() => alert("Share link copied!"));
+        navigator.clipboard.writeText(link).then(() => alert("Shareable link copied!"));
     }
 
     function deleteBook(id) {
-        if(confirm("Are you sure? This will remove it from your list.")){
+        if(confirm("Remove this book from your library list?")){
             myBooks = myBooks.filter(b => b !== id);
-            localStorage.setItem('riyan_lib_v3', JSON.stringify(myBooks));
+            localStorage.setItem('riyan_lib_v4', JSON.stringify(myBooks));
             renderLibrary();
         }
     }
 
     function nextPage() {
         if (currentPage < totalPages - 1) {
-            playFlip();
+            document.getElementById('flipSound').play();
             document.getElementById(`page-${currentPage}`).classList.add('flipped');
             currentPage++;
-            updateUI();
+            updateCounter();
         }
     }
 
     function prevPage() {
         if (currentPage > 0) {
-            playFlip();
+            document.getElementById('flipSound').play();
             currentPage--;
             document.getElementById(`page-${currentPage}`).classList.remove('flipped');
-            updateUI();
+            updateCounter();
         }
     }
 
-    function updateUI() { document.getElementById('pageCounter').innerText = `${currentPage + 1} / ${totalPages}`; }
+    function updateCounter() {
+        document.getElementById('pageCounter').innerText = `${currentPage + 1} / ${totalPages}`;
+    }
 
     init();
 </script>
