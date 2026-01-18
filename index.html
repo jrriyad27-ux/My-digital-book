@@ -9,19 +9,20 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     
     <style>
-        :root { --primary: #2c3e50; --paper: #fdfaf1; --accent: #3498db; }
+        :root { --primary: #2c3e50; --paper: #fdfaf1; --accent: #3498db; --success: #27ae60; --danger: #e74c3c; }
         body { font-family: 'Segoe UI', serif; background: #e5e7eb; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         /* Tabs UI */
         .tabs { display: flex; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #7f8c8d; border-bottom: 3px solid transparent; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #7f8c8d; border-bottom: 3px solid transparent; transition: 0.3s; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: #f8fafc; }
-        .panel-container { background: white; padding: 15px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 40vh; overflow-y: auto; }
+
+        .panel-container { background: white; padding: 15px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 45vh; overflow-y: auto; }
         .panel-container.active { display: block; }
 
-        /* Book Viewer */
+        /* Viewer Area */
         .viewer-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; perspective: 2000px; padding: 10px; position: relative; }
-        .book-container { width: 100%; max-width: 360px; height: 65vh; position: relative; transform-style: preserve-3d; }
+        .book-container { width: 100%; max-width: 360px; height: 60vh; position: relative; transform-style: preserve-3d; }
         
         .page { 
             width: 100%; height: 100%; position: absolute; background: var(--paper); 
@@ -32,34 +33,30 @@
         }
         .page.flipped { transform: rotateY(-180deg); }
         
-        /* Cover Styling - Fixed Overflow */
         .cover { 
             background: var(--primary); color: white; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; text-align: center; z-index: 1000 !important; 
-            padding: 40px;
+            justify-content: center; align-items: center; text-align: center; z-index: 1000 !important; padding: 40px;
         }
-        .cover h1 { 
-            font-size: clamp(20px, 8vw, 32px); /* অটোমেটিক সাইজ অ্যাডজাস্ট হবে */
-            margin: 0; overflow-wrap: break-word; width: 100%; 
-        }
+        .cover h1 { font-size: clamp(22px, 8vw, 32px); margin: 0; word-wrap: break-word; width: 100%; }
 
-        /* End Page Styling - Centered */
-        .end-page { 
-            background: #fdfaf1; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; text-align: center; 
-        }
-        .end-content { border: 2px solid var(--primary); padding: 20px; border-radius: 10px; }
-
+        .end-page { background: #fdfaf1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         .page-content { line-height: 1.8; font-size: 16px; text-align: justify; color: #333; height: 100%; }
 
         /* Nav Controls */
-        .nav-controls { display: flex; align-items: center; gap: 40px; margin-top: 20px; }
+        .nav-controls { display: flex; align-items: center; gap: 40px; margin-top: 20px; margin-bottom: 10px; }
         .nav-btn { background: white; color: var(--primary); border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .page-counter { font-weight: bold; color: var(--primary); background: white; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
 
-        input, textarea, button.main-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        /* Form Elements */
+        input, textarea, button.main-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 14px; }
         button.main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .book-item { background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--primary); }
+        
+        /* Library List Design */
+        .book-item { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
+        .book-name { font-weight: bold; color: var(--primary); font-size: 16px; display: block; margin-bottom: 10px; }
+        .book-actions { display: flex; gap: 8px; }
+        .btn-sm { flex: 1; padding: 8px; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center; }
+
         .view-mode .tabs, .view-mode .panel-container { display: none !important; }
     </style>
 </head>
@@ -68,20 +65,22 @@
 <audio id="flipSound" src="https://www.soundjay.com/misc/sounds/paper-flip-1.mp3" preload="auto"></audio>
 
 <div class="tabs">
-    <div class="tab active" onclick="showPanel('writePanel', this)">Write</div>
+    <div class="tab active" onclick="showPanel('writePanel', this)">Add Page</div>
     <div class="tab" onclick="showPanel('newPanel', this)">New Book</div>
     <div class="tab" onclick="showPanel('libPanel', this)">Library</div>
 </div>
 
 <div id="writePanel" class="panel-container active">
-    <input type="text" id="pTitle" placeholder="Chapter Title">
-    <textarea id="pContent" rows="4" placeholder="Paste your story here..."></textarea>
-    <button class="main-btn" onclick="pushPage()">Add Story</button>
+    <p id="statusLabel" style="font-size:12px; color:var(--accent); margin:0;">Active: None</p>
+    <input type="text" id="pTitle" placeholder="Page/Chapter Title">
+    <textarea id="pContent" rows="4" placeholder="Write or paste your content..."></textarea>
+    <button class="main-btn" onclick="pushPage()">Save Page</button>
 </div>
 
 <div id="newPanel" class="panel-container">
-    <input type="text" id="nbName" placeholder="Enter Book Name">
-    <button class="main-btn" onclick="createBook()">Create Book</button>
+    <p style="font-size: 13px; color: #666;">Enter a unique name to start a new book.</p>
+    <input type="text" id="nbName" placeholder="Book Name (e.g., My_Diary)">
+    <button class="main-btn" style="background: var(--success);" onclick="createBook()">Create & Open</button>
 </div>
 
 <div id="libPanel" class="panel-container">
@@ -93,7 +92,7 @@
         <div class="page cover" id="page-0">
             <h1 id="bookNameDisplay">Enigma's Echo</h1>
             <div style="width: 40px; height: 3px; background: #e67e22; margin: 20px 0;"></div>
-            <p style="opacity: 0.8; font-size: 14px;">Cloud Library Edition</p>
+            <p style="opacity: 0.8; font-size: 14px;">Select a book from Library</p>
         </div>
     </div>
 
@@ -121,15 +120,16 @@ const firebaseConfig = {
     const urlParams = new URLSearchParams(window.location.search);
     let bookId = urlParams.get('id');
     let currentPage = 0, totalPages = 1;
-    let myBooks = JSON.parse(localStorage.getItem('riyan_vfinal_fix')) || [];
+    let myBooks = JSON.parse(localStorage.getItem('riyad_library_vfinal')) || [];
 
     function init() {
         if(bookId) {
+            document.getElementById('statusLabel').innerText = "Active: " + bookId;
             document.getElementById('bookNameDisplay').innerText = bookId.replace(/_/g, ' ');
             loadBook(bookId);
             if(!myBooks.includes(bookId)) {
                 myBooks.push(bookId);
-                localStorage.setItem('riyan_vfinal_fix', JSON.stringify(myBooks));
+                localStorage.setItem('riyad_library_vfinal', JSON.stringify(myBooks));
             }
         }
         renderLibrary();
@@ -185,22 +185,19 @@ const firebaseConfig = {
                 }
             }
             
-            // End Page - Centered Design
             const end = document.createElement('div');
             end.className = 'page end-page';
             end.id = `page-${i}`;
             end.style.zIndex = 1000 - i;
             end.innerHTML = `
-                <div class="end-content">
+                <div style="border:2px solid var(--primary); padding:20px; border-radius:10px;">
                     <h2 style="margin:0; color:var(--primary);">THE END</h2>
                     <p style="margin:10px 0; color:#666;">Thanks for reading!</p>
-                    <div style="width:30px; height:2px; background:#ddd; margin:15px auto;"></div>
-                    <strong style="font-size:14px; color:var(--primary);">Enigma's Echo</strong>
-                    <p style="font-size:12px; color:#999; margin-top:5px;">by Riyad</p>
+                    <strong style="font-size:14px;">Enigma's Echo</strong><br>
+                    <small>by Riyad</small>
                 </div>
             `;
             container.appendChild(end);
-            
             totalPages = i + 1;
             updateUI();
         });
@@ -209,13 +206,13 @@ const firebaseConfig = {
     function pushPage() {
         const t = document.getElementById('pTitle').value.trim();
         const c = document.getElementById('pContent').value.trim();
-        if(!bookId) return alert("Select a book!");
+        if(!bookId) return alert("Select or Create a book first!");
         if(t && c) {
             db.ref('all_books/' + bookId).push({ title: t, content: c })
             .then(() => {
                 document.getElementById('pTitle').value = "";
                 document.getElementById('pContent').value = "";
-                alert("Added!");
+                alert("Page added to " + bookId);
             });
         }
     }
@@ -227,20 +224,33 @@ const firebaseConfig = {
 
     function renderLibrary() {
         const list = document.getElementById('libList');
-        list.innerHTML = "";
+        list.innerHTML = myBooks.length ? "" : "No books in your library.";
         myBooks.forEach(id => {
-            list.innerHTML += `
-                <div class="book-item">
-                    <strong>${id}</strong><br>
-                    <button onclick="location.href='?id=${id}'" style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:4px; margin-top:5px; cursor:pointer;">Open</button>
-                    <button onclick="share('${id}')" style="background:#27ae60; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Share</button>
-                </div>`;
+            const item = document.createElement('div');
+            item.className = 'book-item';
+            item.innerHTML = `
+                <span class="book-name">${id.replace(/_/g, ' ')}</span>
+                <div class="book-actions">
+                    <button class="btn-sm" style="background:var(--accent)" onclick="location.href='?id=${id}'">Edit / Open</button>
+                    <button class="btn-sm" style="background:var(--success)" onclick="share('${id}')">Share Link</button>
+                    <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromList('${id}')">Remove</button>
+                </div>
+            `;
+            list.appendChild(item);
         });
     }
 
     function share(id) {
         const link = window.location.origin + window.location.pathname + "?id=" + id + "&view";
-        navigator.clipboard.writeText(link).then(() => alert("Share link copied!"));
+        navigator.clipboard.writeText(link).then(() => alert("Reader Link Copied!"));
+    }
+
+    function deleteFromList(id) {
+        if(confirm("Remove this book from your list?")) {
+            myBooks = myBooks.filter(b => b !== id);
+            localStorage.setItem('riyad_library_vfinal', JSON.stringify(myBooks));
+            renderLibrary();
+        }
     }
 
     function nextPage() {
@@ -268,4 +278,4 @@ const firebaseConfig = {
     init();
 </script>
 </body>
-    </html>
+</html>
