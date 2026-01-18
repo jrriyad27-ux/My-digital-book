@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enigma's Echo - Pro Library</title>
+    <title>Enigma's Echo - Welcome to My e-book</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -81,7 +81,7 @@
         <div class="page cover" id="page-0">
             <h1 id="bookNameDisplay">Enigma's Echo</h1>
             <div style="width: 30px; height: 2px; background: #e67e22; margin: 15px 0;"></div>
-            <p style="opacity: 0.8; font-size: 12px;">Real-time Tracker</p>
+            <p style="opacity: 0.8; font-size: 12px;">Welcome To My e-book</p>
         </div>
     </div>
     <div class="nav-controls">
@@ -185,7 +185,7 @@ const firebaseConfig = {
             end.className = 'page end-page';
             end.id = `page-${i}`;
             end.style.zIndex = 1000 - i;
-            end.innerHTML = `<div style="border:1px solid var(--primary); padding:15px; border-radius:8px;"><h3>THE END</h3><p style="font-size:12px;">Readers: ${window.currentViews}</p><small>by Riyad</small></div>`;
+            end.innerHTML = `<div style="border:1px solid var(--primary); padding:15px; border-radius:8px;"><h3>THE END</h3><p style="font-size:12px;">Readers: ${window.currentViews}</p><small>Enigma's Echo by Riyad</small></div>`;
             container.appendChild(end);
             totalPages = i + 1;
             updateUI();
