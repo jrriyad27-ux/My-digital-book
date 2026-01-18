@@ -3,93 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enigma's Echo - Welcome to My e-book</title>
+    <title>Enigma Pro - Welcome to My e-book</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     
     <style>
         :root { --primary: #2c3e50; --paper: #fdfaf1; --accent: #3498db; --success: #27ae60; --danger: #e74c3c; }
-        body { font-family: 'Segoe UI', serif; background: #e5e7eb; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: #e5e7eb; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* Tabs UI */
-        .tabs { display: flex; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #7f8c8d; border-bottom: 3px solid transparent; font-size: 14px; }
-        .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: #f8fafc; }
+        /* Top Bar Mode Switcher */
+        .mode-switch { background: var(--primary); color: white; display: flex; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .mode-btn { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; opacity: 0.6; transition: 0.3s; font-size: 14px; }
+        .mode-btn.active { opacity: 1; border-bottom: 4px solid var(--accent); background: rgba(255,255,255,0.1); }
 
-        .panel-container { background: white; padding: 12px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 40vh; overflow-y: auto; }
+        /* Tabs & Panels */
+        .tabs { display: flex; background: white; border-bottom: 1px solid #ddd; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 14px; color: #7f8c8d; }
+        .tab.active { color: var(--primary); font-weight: bold; border-bottom: 3px solid var(--primary); }
+        
+        .panel-container { background: white; padding: 12px; display: none; border-bottom: 1px solid #ddd; max-height: 40vh; overflow-y: auto; }
         .panel-container.active { display: block; }
 
-        .viewer-area { flex-grow: 1; display: none; flex-direction: column; justify-content: center; align-items: center; perspective: 2000px; padding: 5px; position: relative; }
-        .viewer-area.active { display: flex; } 
-
-        .book-container { width: 95%; max-width: 340px; height: 55vh; position: relative; transform-style: preserve-3d; margin: 0 auto; }
+        /* Notepad Card Styling */
+        #notepad-container { display: none; padding: 15px; overflow-y: auto; flex-grow: 1; }
+        .note-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .note-header { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 8px; }
+        .otp-badge { padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
+        .status-unused { background: #dcfce7; color: #166534; }
+        .status-used { background: #fee2e2; color: #991b1b; }
         
-        .page { width: 100%; height: 100%; position: absolute; background: var(--paper); padding: 20px; box-sizing: border-box; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-origin: left; backface-visibility: hidden; border-radius: 5px 12px 12px 5px; overflow: hidden; z-index: 1; }
+        /* Book Mode Styling */
+        #book-mode-container { display: flex; flex-direction: column; flex-grow: 1; }
+        .viewer-area { flex-grow: 1; display: none; flex-direction: column; justify-content: center; align-items: center; perspective: 2000px; padding: 10px; }
+        .viewer-area.active { display: flex; }
+        .book-container { width: 95%; max-width: 340px; height: 50vh; position: relative; transform-style: preserve-3d; }
+        .page { width: 100%; height: 100%; position: absolute; background: var(--paper); padding: 20px; box-sizing: border-box; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: transform 0.8s; transform-origin: left; backface-visibility: hidden; border-radius: 5px 12px 12px 5px; overflow: hidden; }
         .page.flipped { transform: rotateY(-180deg); }
-        
-        .cover { background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; z-index: 1000 !important; }
-        .cover h1 { font-size: clamp(18px, 6vw, 28px); margin: 0; padding: 0 10px; }
+        .page-content { font-size: 15px; line-height: 1.6; text-align: justify; height: 80%; overflow: hidden; }
 
-        .end-page { background: #fdfaf1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .page-content { line-height: 1.6; font-size: 15px; text-align: justify; color: #333; height: 82%; overflow: hidden; }
+        /* Modal for Note Content */
+        #noteModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; padding: 20px; color: white; overflow-y: auto; }
+        .modal-body { background: #1a1a1a; padding: 20px; border-radius: 15px; margin-top: 30px; line-height: 1.7; }
 
-        .nav-controls { display: flex; align-items: center; gap: 30px; margin-top: 15px; margin-bottom: 10px; }
-        .nav-btn { background: white; color: var(--primary); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
-        .page-counter { font-weight: bold; color: var(--primary); background: white; padding: 4px 12px; border-radius: 20px; font-size: 13px; }
-
-        .view-badge { background: #e67e22; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
-        .book-item { background: #f8fafc; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
-        .book-name { font-weight: bold; color: var(--primary); font-size: 15px; }
-
-        input, textarea, button.main-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        button.main-btn { background: var(--primary); color: white; border: none; font-weight: bold; }
-        .btn-sm { flex: 1; padding: 6px; border: none; border-radius: 4px; color: white; font-size: 11px; cursor: pointer; margin-top: 8px; }
-
-        .view-mode .tabs, .view-mode .panel-container { display: none !important; }
-        .view-mode .viewer-area { display: flex !important; }
+        /* UI Elements */
+        input, textarea, .main-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .otp-edit-btn { background: var(--accent); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<audio id="flipSound" src="https://www.soundjay.com/misc/sounds/paper-flip-1.mp3" preload="auto"></audio>
-
-<div class="tabs" id="tabMenu">
-    <div class="tab" id="tab-write" onclick="showPanel('writePanel', this, true)">Add Page</div>
-    <div class="tab" id="tab-new" onclick="showPanel('newPanel', this, false)">New Book</div>
-    <div class="tab" id="tab-lib" onclick="showPanel('libPanel', this, false)">Library</div>
+<div class="mode-switch">
+    <div class="mode-btn active" id="btn-book" onclick="switchMode('book')">📖 BOOK MODE</div>
+    <div class="mode-btn" id="btn-note" onclick="switchMode('note')">📝 NOTEPAD MODE</div>
 </div>
 
-<div id="writePanel" class="panel-container">
-    <p id="statusLabel" style="font-size:11px; color:var(--accent); margin:0;">Active: None</p>
-    <input type="text" id="pTitle" placeholder="Page Title">
-    <textarea id="pContent" rows="3" placeholder="Write content..."></textarea>
-    <button class="main-btn" onclick="pushPage()">Save Page</button>
+<div class="tabs">
+    <div class="tab active" onclick="showPanel('writePanel', this)">Add Entry</div>
+    <div class="tab" onclick="showPanel('listPanel', this)">Library / Files</div>
 </div>
 
-<div id="newPanel" class="panel-container">
-    <input type="text" id="nbName" placeholder="New Book Name">
-    <button class="main-btn" style="background: var(--success);" onclick="createBook()">Create & Open</button>
+<div id="writePanel" class="panel-container active">
+    <input type="text" id="pTitle" placeholder="Title / Chapter Name">
+    <textarea id="pContent" rows="3" placeholder="Write your content or code here..."></textarea>
+    <input type="text" id="pImg" placeholder="Image URL (Optional)">
+    <button class="main-btn" onclick="handleSave()">Save to Cloud</button>
 </div>
 
-<div id="libPanel" class="panel-container">
-    <div id="libList"></div>
+<div id="listPanel" class="panel-container">
+    <div id="dataList">Loading...</div>
 </div>
 
-<div class="viewer-area" id="viewerArea">
-    <div class="book-container" id="book">
-        <div class="page cover" id="page-0">
-            <h1 id="bookNameDisplay">Enigma's Echo</h1>
-            <div style="width: 30px; height: 2px; background: #e67e22; margin: 15px 0;"></div>
-            <p style="opacity: 0.8; font-size: 12px;">Welcome To My e-book</p>
+<div id="book-mode-container">
+    <div class="viewer-area" id="bookViewer">
+        <div class="book-container" id="bookBox">
+            <div class="page" id="page-0" style="background:var(--primary); color:white; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                <h1 id="coverTitle">Select a Book</h1>
+                <p>Digital Library</p>
+            </div>
+        </div>
+        <div style="margin-top:20px; display:flex; gap:20px;">
+            <button onclick="prevPage()" style="padding:10px 20px; border-radius:20px; border:none;">❮</button>
+            <span id="pageCounter" style="color:var(--primary); font-weight:bold; padding-top:10px;">1/1</span>
+            <button onclick="nextPage()" style="padding:10px 20px; border-radius:20px; border:none;">❯</button>
         </div>
     </div>
-    <div class="nav-controls">
-        <button class="nav-btn" onclick="prevPage()">❮</button>
-        <div class="page-counter" id="pageCounter">1 / 1</div>
-        <button class="nav-btn" onclick="nextPage()">❯</button>
-    </div>
 </div>
+
+<div id="notepad-container"></div>
+
+<div id="noteModal">
+    <button onclick="closeModal()" style="float:right; background:red; color:white; border:none; padding:10px; border-radius:5px;">CLOSE</button>
+    <div id="modalContent" class="modal-body"></div>
+</div>
+
+<audio id="flipSound" src="https://www.soundjay.com/misc/sounds/paper-flip-1.mp3" preload="auto"></audio>
 
 <script>
     // Your web app's Firebase configuration
@@ -102,163 +111,171 @@ const firebaseConfig = {
   messagingSenderId: "865378510703",
   appId: "1:865378510703:web:0e3e9a61311ff8bd60ea9a"
 };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
     const urlParams = new URLSearchParams(window.location.search);
     let bookId = urlParams.get('id');
+    let currentMode = 'book';
     let currentPage = 0, totalPages = 1;
-    let myBooks = JSON.parse(localStorage.getItem('riyad_lib_vCounter')) || [];
 
     function init() {
         if(bookId) {
-            document.getElementById('statusLabel').innerText = "Active: " + bookId;
-            document.getElementById('bookNameDisplay').innerText = bookId.replace(/_/g, ' ');
-            showPanel('writePanel', document.getElementById('tab-write'), true);
-            
-            // ভিউ কাউন্ট আপডেট (যদি পাঠক লিঙ্ক ওপেন করে)
-            if(urlParams.has('view')) {
-                db.ref('book_metadata/' + bookId + '/views').transaction(c => (c || 0) + 1);
-            }
-            
-            loadBook(bookId);
-            if(!myBooks.includes(bookId)) {
-                myBooks.push(bookId);
-                localStorage.setItem('riyad_lib_vCounter', JSON.stringify(myBooks));
-            }
-        } else {
-            showPanel('libPanel', document.getElementById('tab-lib'), false);
+            document.getElementById('coverTitle').innerText = bookId.replace(/_/g, ' ');
+            document.getElementById('bookViewer').classList.add('active');
+            loadBookData();
         }
         renderLibrary();
-        if(urlParams.has('view')) document.body.classList.add('view-mode');
     }
 
-    function showPanel(id, el, showPreview) {
-        document.querySelectorAll('.panel-container, .tab').forEach(x => x.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        el.classList.add('active');
-        document.getElementById('viewerArea').classList.toggle('active', showPreview);
-    }
-
-    function paginateText(text, limit = 330) {
-        const pages = [];
-        let currentPos = 0;
-        while (currentPos < text.length) {
-            let chunk = text.substr(currentPos, limit);
-            let lastSpace = chunk.lastIndexOf(" ");
-            if (lastSpace > limit * 0.7 && currentPos + limit < text.length) {
-                chunk = chunk.substr(0, lastSpace);
-            }
-            pages.push(chunk);
-            currentPos += chunk.length;
+    // ২. মোড পরিবর্তন (Book vs Notepad)
+    function switchMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + mode).classList.add('active');
+        
+        if(mode === 'note') {
+            document.getElementById('book-mode-container').style.display = 'none';
+            document.getElementById('notepad-container').style.display = 'block';
+            loadNotepad();
+        } else {
+            document.getElementById('book-mode-container').style.display = 'flex';
+            document.getElementById('notepad-container').style.display = 'none';
         }
-        return pages;
     }
 
-    function loadBook(id) {
-        // রিয়েল-টাইমে ভিউ সংখ্যা শোনা
-        db.ref('book_metadata/' + id + '/views').on('value', (snap) => {
-            window.currentViews = snap.val() || 0;
-        });
+    // ৩. ডাটা সেভ করা (ইমেজ এবং ওটিপি সহ)
+    function handleSave() {
+        const title = document.getElementById('pTitle').value;
+        const content = document.getElementById('pContent').value;
+        const img = document.getElementById('pImg').value;
+        
+        if(!bookId) return alert("Please open or create a book first!");
+        if(!title || !content) return alert("Title and Content required!");
 
-        db.ref('all_books/' + id).on('value', (snap) => {
-            const data = snap.val();
-            const container = document.getElementById('book');
-            container.querySelectorAll('.cloud-page, .end-page').forEach(p => p.remove());
-            let i = 1;
-            if(data) {
-                for(let k in data) {
-                    const d = data[k];
-                    const splitPages = paginateText(d.content);
-                    splitPages.forEach((contentChunk) => {
-                        const div = document.createElement('div');
-                        div.className = 'page cloud-page';
-                        div.id = `page-${i}`;
-                        div.style.zIndex = 1000 - i;
-                        div.innerHTML = `<h5 style="margin:0; color:var(--primary); font-size:13px;">${d.title}</h5><hr style="opacity:0.1; margin:5px 0;"><div class="page-content">${contentChunk.replace(/\n/g,'<br>')}</div><small style="position:absolute; bottom:10px; right:15px; opacity:0.4; font-size:10px;">Page ${i}</small>`;
-                        container.appendChild(div);
-                        i++;
-                    });
-                }
+        if(currentMode === 'note') {
+            const otp = prompt("Set 1-Time OTP for this note:");
+            if(!otp) return;
+            db.ref('notepads/' + bookId).push({ title, content, img, otp, status: 'unused', views: 0, time: Date.now() });
+            alert("Secure Note Saved!");
+        } else {
+            db.ref('all_books/' + bookId).push({ title, content, img });
+            alert("Book Page Added!");
+        }
+        document.getElementById('pTitle').value = "";
+        document.getElementById('pContent').value = "";
+    }
+
+    // ৪. নোটপ্যাড মোড লোড করা
+    function loadNotepad() {
+        db.ref('notepads/' + bookId).on('value', snap => {
+            const container = document.getElementById('notepad-container');
+            container.innerHTML = "";
+            snap.forEach(child => {
+                const note = child.val();
+                const key = child.key;
+                const card = document.createElement('div');
+                card.className = 'note-card';
+                card.innerHTML = `
+                    <div class="note-header">
+                        <span>👁️ Views: ${note.views || 0}</span>
+                        <span class="otp-badge ${note.status==='used'?'status-used':'status-unused'}">${note.status.toUpperCase()}</span>
+                    </div>
+                    <h4 style="margin:5px 0;">${note.title}</h4>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                        <button class="otp-edit-btn" onclick="updateOTP('${key}')">Update OTP</button>
+                        <button class="main-btn" style="width:120px; margin:0;" onclick="openSecureNote('${key}')">Open</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        });
+    }
+
+    // ৫. সিকিউর নোট ওপেন লজিক
+    function openSecureNote(key) {
+        db.ref('notepads/' + bookId + '/' + key).once('value', snap => {
+            const note = snap.val();
+            if(note.status === 'used') return alert("OTP expired! Update OTP to reuse.");
+            
+            const userOTP = prompt("Enter OTP to unlock:");
+            if(userOTP === note.otp) {
+                db.ref('notepads/' + bookId + '/' + key).update({ status: 'used', views: (note.views || 0) + 1 });
+                showModal(note);
+            } else {
+                alert("Wrong OTP!");
             }
-            const end = document.createElement('div');
-            end.className = 'page end-page';
-            end.id = `page-${i}`;
-            end.style.zIndex = 1000 - i;
-            end.innerHTML = `<div style="border:1px solid var(--primary); padding:15px; border-radius:8px;"><h3>THE END</h3><p style="font-size:12px;">Readers: ${window.currentViews}</p><small>Enigma's Echo by Riyad</small></div>`;
-            container.appendChild(end);
-            totalPages = i + 1;
-            updateUI();
+        });
+    }
+
+    function showModal(note) {
+        const modal = document.getElementById('noteModal');
+        const content = document.getElementById('modalContent');
+        modal.style.display = 'block';
+        content.innerHTML = `
+            <h2>${note.title}</h2>
+            ${note.img ? `<img src="${note.img}" style="width:100%; border-radius:10px; margin-bottom:15px;">` : ''}
+            <div style="white-space: pre-wrap; font-family: monospace; background:#000; padding:15px; border-radius:10px;">${note.content}</div>
+        `;
+    }
+
+    function closeModal() { 
+        document.getElementById('noteModal').style.display = 'none'; 
+        location.reload(); 
+    }
+
+    function updateOTP(key) {
+        const newOTP = prompt("Set new OTP for this file:");
+        if(newOTP) db.ref('notepads/' + bookId + '/' + key).update({ otp: newOTP, status: 'unused' });
+    }
+
+    // --- Book Mode Old Logic ---
+    function loadBookData() {
+        db.ref('all_books/' + bookId).on('value', snap => {
+            const data = snap.val();
+            const box = document.getElementById('bookBox');
+            box.querySelectorAll('.cloud-page').forEach(p => p.remove());
+            let i = 1;
+            for(let k in data) {
+                const d = data[k];
+                const div = document.createElement('div');
+                div.className = 'page cloud-page';
+                div.id = 'page-' + i;
+                div.style.zIndex = 100 - i;
+                div.innerHTML = `
+                    <h4 style="margin:0; color:var(--accent);">${d.title}</h4>
+                    ${d.img ? `<img src="${d.img}" style="width:100%; max-height:100px; object-fit:contain; margin:10px 0;">` : ''}
+                    <div class="page-content">${d.content}</div>
+                    <small style="position:absolute; bottom:10px; right:15px;">Page ${i}</small>
+                `;
+                box.appendChild(div);
+                i++;
+            }
+            totalPages = i;
+            updateCounter();
         });
     }
 
     function renderLibrary() {
-        const list = document.getElementById('libList');
-        list.innerHTML = "";
-        myBooks.forEach(id => {
-            // প্রতিটি বইয়ের ভিউ সংখ্যা ফায়ারবেস থেকে আনা
-            db.ref('book_metadata/' + id + '/views').on('value', (snap) => {
-                const count = snap.val() || 0;
-                let existingItem = document.getElementById('item-' + id);
-                
-                const itemHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="book-name">${id.replace(/_/g, ' ')}</span>
-                        <span class="view-badge">👁️ ${count}</span>
-                    </div>
-                    <div class="book-actions" style="display:flex; gap:5px;">
-                        <button class="btn-sm" style="background:var(--accent)" onclick="location.href='?id=${id}'">Edit</button>
-                        <button class="btn-sm" style="background:var(--success)" onclick="share('${id}')">Share</button>
-                        <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromList('${id}')">Del</button>
-                    </div>`;
-
-                if(existingItem) {
-                    existingItem.innerHTML = itemHTML;
-                } else {
-                    const div = document.createElement('div');
-                    div.id = 'item-' + id;
-                    div.className = 'book-item';
-                    div.innerHTML = itemHTML;
-                    list.appendChild(div);
-                }
-            });
-        });
+        const list = document.getElementById('dataList');
+        list.innerHTML = `<button class="main-btn" onclick="createNewBook()">+ Create New Book/Vault</button>`;
+        // Note: Library management is local or Firebase-based as per previous versions
     }
 
-    function createBook() {
-        const name = document.getElementById('nbName').value.trim().replace(/\s+/g,'_');
-        if(name) window.location.href = window.location.pathname + "?id=" + name;
+    function createNewBook() {
+        const name = prompt("Enter Name:");
+        if(name) window.location.href = "?id=" + name.replace(/\s+/g, '_');
     }
 
-    function share(id) {
-        const link = window.location.origin + window.location.pathname + "?id=" + id + "&view";
-        navigator.clipboard.writeText(link).then(() => alert("Link Copied!"));
+    function showPanel(id, el) {
+        document.querySelectorAll('.panel-container, .tab').forEach(x => x.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        el.classList.add('active');
     }
 
-    function deleteFromList(id) {
-        if(confirm("Remove?")) {
-            myBooks = myBooks.filter(b => b !== id);
-            localStorage.setItem('riyad_lib_vCounter', JSON.stringify(myBooks));
-            location.reload();
-        }
-    }
-
-    function pushPage() {
-        const t = document.getElementById('pTitle').value.trim();
-        const c = document.getElementById('pContent').value.trim();
-        if(!bookId) return alert("Select a book!");
-        if(t && c) {
-            db.ref('all_books/' + bookId).push({ title: t, content: c }).then(() => { 
-                alert("Saved!"); 
-                document.getElementById('pTitle').value=""; 
-                document.getElementById('pContent').value=""; 
-            });
-        }
-    }
-
-    function nextPage() { if (currentPage < totalPages - 1) { document.getElementById('flipSound').play(); document.getElementById(`page-${currentPage}`).classList.add('flipped'); currentPage++; updateUI(); } }
-    function prevPage() { if (currentPage > 0) { document.getElementById('flipSound').play(); currentPage--; document.getElementById(`page-${currentPage}`).classList.remove('flipped'); updateUI(); } }
-    function updateUI() { document.getElementById('pageCounter').innerText = `${currentPage + 1} / ${totalPages}`; }
+    function nextPage() { if(currentPage < totalPages-1) { document.getElementById('flipSound').play(); document.getElementById('page-'+currentPage).classList.add('flipped'); currentPage++; updateCounter(); } }
+    function prevPage() { if(currentPage > 0) { document.getElementById('flipSound').play(); currentPage--; document.getElementById('page-'+currentPage).classList.remove('flipped'); updateCounter(); } }
+    function updateCounter() { document.getElementById('pageCounter').innerText = (currentPage+1) + " / " + totalPages; }
 
     init();
 </script>
