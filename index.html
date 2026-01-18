@@ -3,43 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enigma's Echo - Pro Library</title>
+    <title>Enigma's Echo - Real Book Feel</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     
     <style>
-        :root { --primary: #2c3e50; --paper: #fdfaf1; --accent: #3498db; --danger: #e74c3c; --success: #27ae60; }
-        body { font-family: 'Segoe UI', sans-serif; background: #e5e7eb; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        :root { --primary: #2c3e50; --paper: #fdfaf1; --accent: #3498db; }
+        body { font-family: 'Segoe UI', serif; background: #e5e7eb; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         /* Tabs UI */
         .tabs { display: flex; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
         .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #7f8c8d; border-bottom: 3px solid transparent; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: #f8fafc; }
 
-        .panel-container { background: white; padding: 15px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 45vh; overflow-y: auto; }
+        .panel-container { background: white; padding: 15px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 40vh; overflow-y: auto; }
         .panel-container.active { display: block; }
 
-        /* Viewer Area */
-        .viewer-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; perspective: 1500px; padding: 10px; position: relative; }
-        .book-container { width: 100%; max-width: 380px; height: 55vh; position: relative; transform-style: preserve-3d; }
-        .page { width: 100%; height: 100%; position: absolute; background: var(--paper); padding: 25px; box-sizing: border-box; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: transform 0.6s ease-in-out; transform-origin: left; backface-visibility: hidden; border-radius: 5px 15px 15px 5px; overflow-y: auto; }
+        /* Book Viewer */
+        .viewer-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; perspective: 2000px; padding: 10px; position: relative; }
+        .book-container { width: 100%; max-width: 360px; height: 65vh; position: relative; transform-style: preserve-3d; }
+        
+        .page { 
+            width: 100%; height: 100%; position: absolute; background: var(--paper); 
+            padding: 30px; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
+            transform-origin: left; backface-visibility: hidden; 
+            border-radius: 5px 15px 15px 5px; overflow: hidden; /* No Scroll */
+            z-index: 1; 
+        }
         .page.flipped { transform: rotateY(-180deg); }
-        .cover { background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; z-index: 100; }
+        
+        .cover { background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; z-index: 1000 !important; }
+        .page-content { line-height: 1.8; font-size: 16px; text-align: justify; color: #333; height: 100%; }
 
-        /* Navigation Controls */
-        .nav-controls { display: flex; align-items: center; gap: 40px; margin: 15px 0; }
-        .nav-btn { background: white; color: var(--primary); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
+        /* Nav Buttons */
+        .nav-controls { display: flex; align-items: center; gap: 40px; margin-top: 20px; }
+        .nav-btn { background: white; color: var(--primary); border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .page-counter { font-weight: bold; color: var(--primary); background: white; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
 
-        /* Input & Buttons */
-        input, textarea, button.main-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-family: inherit; }
+        input, textarea, button.main-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         button.main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .book-item { background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 5px solid var(--primary); }
-        .book-actions { display: flex; gap: 5px; margin-top: 8px; }
-        .action-btn-small { flex: 1; padding: 6px; font-size: 11px; border: none; border-radius: 4px; color: white; cursor: pointer; }
-
-        /* Hide Admin UI in View Mode */
+        
+        .book-item { background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--primary); }
         .view-mode .tabs, .view-mode .panel-container { display: none !important; }
     </style>
 </head>
@@ -47,22 +53,21 @@
 
 <audio id="flipSound" src="https://www.soundjay.com/misc/sounds/paper-flip-1.mp3" preload="auto"></audio>
 
-<div class="tabs" id="mainTabs">
-    <div class="tab active" onclick="showPanel('writePanel', this)">Write Page</div>
+<div class="tabs">
+    <div class="tab active" onclick="showPanel('writePanel', this)">Write</div>
     <div class="tab" onclick="showPanel('newPanel', this)">New Book</div>
     <div class="tab" onclick="showPanel('libPanel', this)">Library</div>
 </div>
 
 <div id="writePanel" class="panel-container active">
-    <p id="currentBookLabel" style="font-weight: bold; color: var(--accent); margin: 0;">Current: None</p>
-    <input type="text" id="pageTitle" placeholder="Chapter Title">
-    <textarea id="pageContent" rows="3" placeholder="Write page content here..."></textarea>
-    <button class="main-btn" onclick="pushPage()">Add Page to Book</button>
+    <input type="text" id="pTitle" placeholder="Chapter Title">
+    <textarea id="pContent" rows="4" placeholder="Paste your long story here..."></textarea>
+    <button class="main-btn" onclick="pushPage()">Add Story</button>
 </div>
 
 <div id="newPanel" class="panel-container">
-    <input type="text" id="newBookId" placeholder="Book Name (No spaces, e.g. MyJournal)">
-    <button class="main-btn" style="background: var(--success);" onclick="createBook()">Create & Open Book</button>
+    <input type="text" id="nbName" placeholder="Enter Book Name">
+    <button class="main-btn" onclick="createBook()">Create Book</button>
 </div>
 
 <div id="libPanel" class="panel-container">
@@ -72,12 +77,12 @@
 <div class="viewer-area">
     <div class="book-container" id="book">
         <div class="page cover" id="page-0">
-            <h2 id="displayTitle">Enigma's Echo</h2>
-            <p>Digital Cloud Library</p>
-            <small>Create or Select a Book to Start</small>
+            <h1 id="bookNameDisplay">Enigma's Echo</h1>
+            <p>Full-Page Story Reader</p>
+            <small>Arrows to Flip</small>
         </div>
     </div>
-    
+
     <div class="nav-controls">
         <button class="nav-btn" onclick="prevPage()">❮</button>
         <div class="page-counter" id="pageCounter">1 / 1</div>
@@ -86,7 +91,7 @@
 </div>
 
 <script>
-  // Your web app's Firebase configuration
+    // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAHb1Zifpb1d48j-hmf4Py4XZEOzEnKx64",
   authDomain: "my-digital-85852.firebaseapp.com",
@@ -98,21 +103,19 @@ const firebaseConfig = {
 };
 
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
+    const db = firebase.database();
     const urlParams = new URLSearchParams(window.location.search);
     let bookId = urlParams.get('id');
     let currentPage = 0, totalPages = 1;
-    let myBooks = JSON.parse(localStorage.getItem('riyan_lib_v4')) || [];
+    let myBooks = JSON.parse(localStorage.getItem('riyan_final_paginated')) || [];
 
     function init() {
         if(bookId) {
-            document.getElementById('currentBookLabel').innerText = "Current Book: " + bookId;
-            document.getElementById('displayTitle').innerText = bookId;
+            document.getElementById('bookNameDisplay').innerText = bookId;
             loadBook(bookId);
             if(!myBooks.includes(bookId)) {
                 myBooks.push(bookId);
-                localStorage.setItem('riyan_lib_v4', JSON.stringify(myBooks));
+                localStorage.setItem('riyan_final_paginated', JSON.stringify(myBooks));
             }
         }
         renderLibrary();
@@ -125,102 +128,100 @@ const firebaseConfig = {
         el.classList.add('active');
     }
 
+    // টেক্সটকে পাতার সাইজ অনুযায়ী ভাঙার ফাংশন
+    function paginateText(text, limit = 650) {
+        const pages = [];
+        let currentPos = 0;
+        while (currentPos < text.length) {
+            let chunk = text.substr(currentPos, limit);
+            // শব্দ যেন মাঝখানে না কাটে তাই শেষ স্পেস পর্যন্ত নেওয়া
+            let lastSpace = chunk.lastIndexOf(" ");
+            if (lastSpace > limit * 0.8 && currentPos + limit < text.length) {
+                chunk = chunk.substr(0, lastSpace);
+            }
+            pages.push(chunk);
+            currentPos += chunk.length;
+        }
+        return pages;
+    }
+
     function loadBook(id) {
-        database.ref('all_books/' + id).on('value', (snap) => {
+        db.ref('all_books/' + id).on('value', (snap) => {
             const data = snap.val();
-            const bookContainer = document.getElementById('book');
-            bookContainer.querySelectorAll('.cloud-page, .end-page').forEach(p => p.remove());
+            const container = document.getElementById('book');
+            container.querySelectorAll('.cloud-page, .end-page').forEach(p => p.remove());
             
             let i = 1;
             if(data) {
-                for(let key in data) {
-                    const d = data[key];
-                    const div = document.createElement('div');
-                    div.className = 'page cloud-page';
-                    div.id = `page-${i}`;
-                    div.style.zIndex = 500 - i;
-                    div.innerHTML = `<h3>${d.title}</h3><hr><p>${d.content.replace(/\n/g,'<br>')}</p><small style="position:absolute; bottom:15px;">Page ${i}</small>`;
-                    bookContainer.appendChild(div);
-                    i++;
+                for(let k in data) {
+                    const d = data[k];
+                    // অটো-প্যাজিনেশন লজিক প্রয়োগ
+                    const splitPages = paginateText(d.content);
+                    
+                    splitPages.forEach((contentChunk, subIndex) => {
+                        const div = document.createElement('div');
+                        div.className = 'page cloud-page';
+                        div.id = `page-${i}`;
+                        div.style.zIndex = 1000 - i;
+                        div.innerHTML = `
+                            <h4 style="margin:0; color:var(--primary); font-size:14px;">${d.title} ${splitPages.length > 1 ? `(Part ${subIndex+1})` : ''}</h4>
+                            <hr style="opacity:0.2">
+                            <div class="page-content">${contentChunk.replace(/\n/g,'<br>')}</div>
+                            <small style="position:absolute; bottom:15px; right:20px; font-style:italic;">Page ${i}</small>
+                        `;
+                        container.appendChild(div);
+                        i++;
+                    });
                 }
             }
-            // End Page
+            
             const end = document.createElement('div');
             end.className = 'page end-page';
             end.id = `page-${i}`;
-            end.style.zIndex = 500 - i;
-            end.innerHTML = `<div style="text-align:center; margin-top:50%;"><h2>FINISH</h2><p>Thanks for reading!</p><strong>Enigma's Echo</strong></div>`;
-            bookContainer.appendChild(end);
+            end.style.zIndex = 1000 - i;
+            end.innerHTML = `<h2>THE END</h2><p>Thanks for reading!</p>`;
+            container.appendChild(end);
             
             totalPages = i + 1;
-            updateCounter();
+            updateUI();
         });
     }
 
     function pushPage() {
-        const title = document.getElementById('pageTitle').value.trim();
-        const content = document.getElementById('pageContent').value.trim();
-        
-        if(!bookId) {
-            alert("Please select or create a book first!");
-            return;
+        const t = document.getElementById('pTitle').value.trim();
+        const c = document.getElementById('pContent').value.trim();
+        if(!bookId) return alert("Select a book!");
+        if(t && c) {
+            db.ref('all_books/' + bookId).push({ title: t, content: c })
+            .then(() => {
+                document.getElementById('pTitle').value = "";
+                document.getElementById('pContent').value = "";
+                alert("Story Added Successfully!");
+            });
         }
-        
-        if(title === "" || content === "") {
-            alert("Please enter both Title and Content!");
-            return;
-        }
-
-        // ফিক্সড ডাটা পুশিং লজিক
-        database.ref('all_books/' + bookId).push({
-            title: title,
-            content: content,
-            timestamp: Date.now()
-        }).then(() => {
-            document.getElementById('pageTitle').value = "";
-            document.getElementById('pageContent').value = "";
-            alert("Page added successfully!");
-        }).catch((error) => {
-            alert("Error adding page: " + error.message);
-        });
     }
 
     function createBook() {
-        const name = document.getElementById('newBookId').value.trim().replace(/\s+/g,'_');
-        if(name) {
-            window.location.href = window.location.pathname + "?id=" + name;
-        } else {
-            alert("Please enter a valid book name.");
-        }
+        const name = document.getElementById('nbName').value.trim().replace(/\s+/g,'_');
+        if(name) window.location.href = window.location.pathname + "?id=" + name;
     }
 
     function renderLibrary() {
         const list = document.getElementById('libList');
-        list.innerHTML = myBooks.length ? "" : "No books in library.";
+        list.innerHTML = "";
         myBooks.forEach(id => {
             list.innerHTML += `
                 <div class="book-item">
-                    <strong>${id}</strong>
-                    <div class="book-actions">
-                        <button class="action-btn-small" style="background:var(--accent)" onclick="location.href='?id=${id}'">Open/Edit</button>
-                        <button class="action-btn-small" style="background:var(--success)" onclick="share('${id}')">Share</button>
-                        <button class="action-btn-small" style="background:var(--danger)" onclick="deleteBook('${id}')">Del</button>
-                    </div>
+                    <strong>${id}</strong><br>
+                    <button onclick="location.href='?id=${id}'" style="background:var(--accent); color:white; border:none; border-radius:4px; padding:4px 8px; margin-top:5px; cursor:pointer;">Edit</button>
+                    <button onclick="share('${id}')" style="background:var(--success); color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;">Share</button>
                 </div>`;
         });
     }
 
     function share(id) {
         const link = window.location.origin + window.location.pathname + "?id=" + id + "&view";
-        navigator.clipboard.writeText(link).then(() => alert("Shareable link copied!"));
-    }
-
-    function deleteBook(id) {
-        if(confirm("Remove this book from your library list?")){
-            myBooks = myBooks.filter(b => b !== id);
-            localStorage.setItem('riyan_lib_v4', JSON.stringify(myBooks));
-            renderLibrary();
-        }
+        navigator.clipboard.writeText(link).then(() => alert("Share link copied!"));
     }
 
     function nextPage() {
@@ -228,7 +229,7 @@ const firebaseConfig = {
             document.getElementById('flipSound').play();
             document.getElementById(`page-${currentPage}`).classList.add('flipped');
             currentPage++;
-            updateCounter();
+            updateUI();
         }
     }
 
@@ -237,11 +238,11 @@ const firebaseConfig = {
             document.getElementById('flipSound').play();
             currentPage--;
             document.getElementById(`page-${currentPage}`).classList.remove('flipped');
-            updateCounter();
+            updateUI();
         }
     }
 
-    function updateCounter() {
+    function updateUI() {
         document.getElementById('pageCounter').innerText = `${currentPage + 1} / ${totalPages}`;
     }
 
