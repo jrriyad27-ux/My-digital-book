@@ -83,7 +83,7 @@
         <div class="page cover" id="page-0">
             <h1 id="bookNameDisplay">Enigma's Echo</h1>
             <div style="width: 40px; height: 3px; background: #e67e22; margin: 20px 0;"></div>
-            <p style="opacity: 0.8; font-size: 14px;">Reader Preview</p>
+            <p style="opacity: 0.8; font-size: 14px;">Welcome to my e-library</p>
         </div>
     </div>
     <div class="nav-controls">
@@ -185,7 +185,7 @@ const firebaseConfig = {
             end.className = 'page end-page';
             end.id = `page-${i}`;
             end.style.zIndex = 1000 - i;
-            end.innerHTML = `<div style="border:2px solid var(--primary); padding:20px; border-radius:10px;"><h2>THE END</h2><p>by Riyad</p></div>`;
+            end.innerHTML = `<div style="border:2px solid var(--primary); padding:20px; border-radius:10px;"><h2>THE END</h2><p1>Enigma's Echo</p1><p2><by Riyad</p2></div>`;
             container.appendChild(end);
             totalPages = i + 1;
             updateUI();
