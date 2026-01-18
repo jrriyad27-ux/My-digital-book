@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enigma's Echo - Real Book Feel</title>
+    <title>Enigma's Echo - Final Pro</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -16,7 +16,6 @@
         .tabs { display: flex; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
         .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #7f8c8d; border-bottom: 3px solid transparent; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: #f8fafc; }
-
         .panel-container { background: white; padding: 15px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 40vh; overflow-y: auto; }
         .panel-container.active { display: block; }
 
@@ -29,22 +28,37 @@
             padding: 30px; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
             transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
             transform-origin: left; backface-visibility: hidden; 
-            border-radius: 5px 15px 15px 5px; overflow: hidden; /* No Scroll */
-            z-index: 1; 
+            border-radius: 5px 15px 15px 5px; overflow: hidden; z-index: 1; 
         }
         .page.flipped { transform: rotateY(-180deg); }
         
-        .cover { background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; z-index: 1000 !important; }
+        /* Cover Styling - Fixed Overflow */
+        .cover { 
+            background: var(--primary); color: white; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; text-align: center; z-index: 1000 !important; 
+            padding: 40px;
+        }
+        .cover h1 { 
+            font-size: clamp(20px, 8vw, 32px); /* অটোমেটিক সাইজ অ্যাডজাস্ট হবে */
+            margin: 0; overflow-wrap: break-word; width: 100%; 
+        }
+
+        /* End Page Styling - Centered */
+        .end-page { 
+            background: #fdfaf1; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; text-align: center; 
+        }
+        .end-content { border: 2px solid var(--primary); padding: 20px; border-radius: 10px; }
+
         .page-content { line-height: 1.8; font-size: 16px; text-align: justify; color: #333; height: 100%; }
 
-        /* Nav Buttons */
+        /* Nav Controls */
         .nav-controls { display: flex; align-items: center; gap: 40px; margin-top: 20px; }
         .nav-btn { background: white; color: var(--primary); border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .page-counter { font-weight: bold; color: var(--primary); background: white; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
 
         input, textarea, button.main-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         button.main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        
         .book-item { background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--primary); }
         .view-mode .tabs, .view-mode .panel-container { display: none !important; }
     </style>
@@ -61,7 +75,7 @@
 
 <div id="writePanel" class="panel-container active">
     <input type="text" id="pTitle" placeholder="Chapter Title">
-    <textarea id="pContent" rows="4" placeholder="Paste your long story here..."></textarea>
+    <textarea id="pContent" rows="4" placeholder="Paste your story here..."></textarea>
     <button class="main-btn" onclick="pushPage()">Add Story</button>
 </div>
 
@@ -78,8 +92,8 @@
     <div class="book-container" id="book">
         <div class="page cover" id="page-0">
             <h1 id="bookNameDisplay">Enigma's Echo</h1>
-            <p>Full-Page Story Reader</p>
-            <small>Arrows to Flip</small>
+            <div style="width: 40px; height: 3px; background: #e67e22; margin: 20px 0;"></div>
+            <p style="opacity: 0.8; font-size: 14px;">Cloud Library Edition</p>
         </div>
     </div>
 
@@ -107,15 +121,15 @@ const firebaseConfig = {
     const urlParams = new URLSearchParams(window.location.search);
     let bookId = urlParams.get('id');
     let currentPage = 0, totalPages = 1;
-    let myBooks = JSON.parse(localStorage.getItem('riyan_final_paginated')) || [];
+    let myBooks = JSON.parse(localStorage.getItem('riyan_vfinal_fix')) || [];
 
     function init() {
         if(bookId) {
-            document.getElementById('bookNameDisplay').innerText = bookId;
+            document.getElementById('bookNameDisplay').innerText = bookId.replace(/_/g, ' ');
             loadBook(bookId);
             if(!myBooks.includes(bookId)) {
                 myBooks.push(bookId);
-                localStorage.setItem('riyan_final_paginated', JSON.stringify(myBooks));
+                localStorage.setItem('riyan_vfinal_fix', JSON.stringify(myBooks));
             }
         }
         renderLibrary();
@@ -128,13 +142,11 @@ const firebaseConfig = {
         el.classList.add('active');
     }
 
-    // টেক্সটকে পাতার সাইজ অনুযায়ী ভাঙার ফাংশন
-    function paginateText(text, limit = 650) {
+    function paginateText(text, limit = 600) {
         const pages = [];
         let currentPos = 0;
         while (currentPos < text.length) {
             let chunk = text.substr(currentPos, limit);
-            // শব্দ যেন মাঝখানে না কাটে তাই শেষ স্পেস পর্যন্ত নেওয়া
             let lastSpace = chunk.lastIndexOf(" ");
             if (lastSpace > limit * 0.8 && currentPos + limit < text.length) {
                 chunk = chunk.substr(0, lastSpace);
@@ -155,19 +167,17 @@ const firebaseConfig = {
             if(data) {
                 for(let k in data) {
                     const d = data[k];
-                    // অটো-প্যাজিনেশন লজিক প্রয়োগ
                     const splitPages = paginateText(d.content);
-                    
                     splitPages.forEach((contentChunk, subIndex) => {
                         const div = document.createElement('div');
                         div.className = 'page cloud-page';
                         div.id = `page-${i}`;
                         div.style.zIndex = 1000 - i;
                         div.innerHTML = `
-                            <h4 style="margin:0; color:var(--primary); font-size:14px;">${d.title} ${splitPages.length > 1 ? `(Part ${subIndex+1})` : ''}</h4>
-                            <hr style="opacity:0.2">
+                            <h4 style="margin:0; color:var(--primary); font-size:14px;">${d.title} ${splitPages.length > 1 ? `(${subIndex+1})` : ''}</h4>
+                            <hr style="opacity:0.1; margin: 10px 0;">
                             <div class="page-content">${contentChunk.replace(/\n/g,'<br>')}</div>
-                            <small style="position:absolute; bottom:15px; right:20px; font-style:italic;">Page ${i}</small>
+                            <small style="position:absolute; bottom:15px; right:20px; opacity:0.5;">Page ${i}</small>
                         `;
                         container.appendChild(div);
                         i++;
@@ -175,11 +185,20 @@ const firebaseConfig = {
                 }
             }
             
+            // End Page - Centered Design
             const end = document.createElement('div');
             end.className = 'page end-page';
             end.id = `page-${i}`;
             end.style.zIndex = 1000 - i;
-            end.innerHTML = `<h2>THE END</h2><p>Thanks for reading!</p>`;
+            end.innerHTML = `
+                <div class="end-content">
+                    <h2 style="margin:0; color:var(--primary);">THE END</h2>
+                    <p style="margin:10px 0; color:#666;">Thanks for reading!</p>
+                    <div style="width:30px; height:2px; background:#ddd; margin:15px auto;"></div>
+                    <strong style="font-size:14px; color:var(--primary);">Enigma's Echo</strong>
+                    <p style="font-size:12px; color:#999; margin-top:5px;">by Riyad</p>
+                </div>
+            `;
             container.appendChild(end);
             
             totalPages = i + 1;
@@ -196,7 +215,7 @@ const firebaseConfig = {
             .then(() => {
                 document.getElementById('pTitle').value = "";
                 document.getElementById('pContent').value = "";
-                alert("Story Added Successfully!");
+                alert("Added!");
             });
         }
     }
@@ -213,8 +232,8 @@ const firebaseConfig = {
             list.innerHTML += `
                 <div class="book-item">
                     <strong>${id}</strong><br>
-                    <button onclick="location.href='?id=${id}'" style="background:var(--accent); color:white; border:none; border-radius:4px; padding:4px 8px; margin-top:5px; cursor:pointer;">Edit</button>
-                    <button onclick="share('${id}')" style="background:var(--success); color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;">Share</button>
+                    <button onclick="location.href='?id=${id}'" style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:4px; margin-top:5px; cursor:pointer;">Open</button>
+                    <button onclick="share('${id}')" style="background:#27ae60; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Share</button>
                 </div>`;
         });
     }
@@ -249,4 +268,4 @@ const firebaseConfig = {
     init();
 </script>
 </body>
-</html>
+    </html>
