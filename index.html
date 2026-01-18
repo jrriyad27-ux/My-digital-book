@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enigma's Echo - Riyad Edition</title>
+    <title>Enigma's Echo - Pro Library</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -14,40 +14,38 @@
 
         /* Tabs UI */
         .tabs { display: flex; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #7f8c8d; border-bottom: 3px solid transparent; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #7f8c8d; border-bottom: 3px solid transparent; font-size: 14px; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: #f8fafc; }
 
-        .panel-container { background: white; padding: 15px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 45vh; overflow-y: auto; }
+        .panel-container { background: white; padding: 12px; display: none; z-index: 999; border-bottom: 1px solid #ddd; max-height: 40vh; overflow-y: auto; }
         .panel-container.active { display: block; }
 
-        /* Viewer Area */
-        .viewer-area { flex-grow: 1; display: none; flex-direction: column; justify-content: center; align-items: center; perspective: 2000px; padding: 10px; position: relative; }
+        .viewer-area { flex-grow: 1; display: none; flex-direction: column; justify-content: center; align-items: center; perspective: 2000px; padding: 5px; position: relative; }
         .viewer-area.active { display: flex; } 
 
-        .book-container { width: 100%; max-width: 360px; height: 60vh; position: relative; transform-style: preserve-3d; }
-        .page { width: 100%; height: 100%; position: absolute; background: var(--paper); padding: 30px; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-origin: left; backface-visibility: hidden; border-radius: 5px 15px 15px 5px; overflow: hidden; z-index: 1; }
+        .book-container { width: 95%; max-width: 340px; height: 55vh; position: relative; transform-style: preserve-3d; margin: 0 auto; }
+        
+        .page { width: 100%; height: 100%; position: absolute; background: var(--paper); padding: 20px; box-sizing: border-box; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-origin: left; backface-visibility: hidden; border-radius: 5px 12px 12px 5px; overflow: hidden; z-index: 1; }
         .page.flipped { transform: rotateY(-180deg); }
         
-        .cover { background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; z-index: 1000 !important; padding: 40px; }
-        .cover h1 { font-size: clamp(22px, 8vw, 32px); margin: 0; }
+        .cover { background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; z-index: 1000 !important; }
+        .cover h1 { font-size: clamp(18px, 6vw, 28px); margin: 0; padding: 0 10px; }
+
         .end-page { background: #fdfaf1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .page-content { line-height: 1.8; font-size: 16px; text-align: justify; color: #333; height: 100%; }
+        .page-content { line-height: 1.6; font-size: 15px; text-align: justify; color: #333; height: 82%; overflow: hidden; }
 
-        /* Nav Controls */
-        .nav-controls { display: flex; align-items: center; gap: 40px; margin-top: 20px; }
-        .nav-btn { background: white; color: var(--primary); border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
-        .page-counter { font-weight: bold; color: var(--primary); background: white; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
+        .nav-controls { display: flex; align-items: center; gap: 30px; margin-top: 15px; margin-bottom: 10px; }
+        .nav-btn { background: white; color: var(--primary); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
+        .page-counter { font-weight: bold; color: var(--primary); background: white; padding: 4px 12px; border-radius: 20px; font-size: 13px; }
 
-        /* Library List Items */
-        .book-item { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
-        .book-name { font-weight: bold; color: var(--primary); font-size: 16px; display: block; margin-bottom: 10px; }
-        .book-actions { display: flex; gap: 8px; }
-        .btn-sm { flex: 1; padding: 8px; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center; }
+        .view-badge { background: #e67e22; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+        .book-item { background: #f8fafc; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
+        .book-name { font-weight: bold; color: var(--primary); font-size: 15px; }
 
-        input, textarea, button.main-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        button.main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        input, textarea, button.main-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        button.main-btn { background: var(--primary); color: white; border: none; font-weight: bold; }
+        .btn-sm { flex: 1; padding: 6px; border: none; border-radius: 4px; color: white; font-size: 11px; cursor: pointer; margin-top: 8px; }
 
-        /* Mode Styles */
         .view-mode .tabs, .view-mode .panel-container { display: none !important; }
         .view-mode .viewer-area { display: flex !important; }
     </style>
@@ -63,9 +61,9 @@
 </div>
 
 <div id="writePanel" class="panel-container">
-    <p id="statusLabel" style="font-size:12px; color:var(--accent); margin:0;">Active: None</p>
+    <p id="statusLabel" style="font-size:11px; color:var(--accent); margin:0;">Active: None</p>
     <input type="text" id="pTitle" placeholder="Page Title">
-    <textarea id="pContent" rows="4" placeholder="Write content..."></textarea>
+    <textarea id="pContent" rows="3" placeholder="Write content..."></textarea>
     <button class="main-btn" onclick="pushPage()">Save Page</button>
 </div>
 
@@ -82,8 +80,8 @@
     <div class="book-container" id="book">
         <div class="page cover" id="page-0">
             <h1 id="bookNameDisplay">Enigma's Echo</h1>
-            <div style="width: 40px; height: 3px; background: #e67e22; margin: 20px 0;"></div>
-            <p style="opacity: 0.8; font-size: 14px;">Welcome to my e-library</p>
+            <div style="width: 30px; height: 2px; background: #e67e22; margin: 15px 0;"></div>
+            <p style="opacity: 0.8; font-size: 12px;">Real-time Tracker</p>
         </div>
     </div>
     <div class="nav-controls">
@@ -110,48 +108,45 @@ const firebaseConfig = {
     const urlParams = new URLSearchParams(window.location.search);
     let bookId = urlParams.get('id');
     let currentPage = 0, totalPages = 1;
-    let myBooks = JSON.parse(localStorage.getItem('riyad_lib_v100')) || [];
+    let myBooks = JSON.parse(localStorage.getItem('riyad_lib_vCounter')) || [];
 
     function init() {
         if(bookId) {
             document.getElementById('statusLabel').innerText = "Active: " + bookId;
             document.getElementById('bookNameDisplay').innerText = bookId.replace(/_/g, ' ');
-            // যদি URL-এ id থাকে, তবে সরাসরি Add Page ট্যাব এবং প্রিভিউ দেখাও
             showPanel('writePanel', document.getElementById('tab-write'), true);
+            
+            // ভিউ কাউন্ট আপডেট (যদি পাঠক লিঙ্ক ওপেন করে)
+            if(urlParams.has('view')) {
+                db.ref('book_metadata/' + bookId + '/views').transaction(c => (c || 0) + 1);
+            }
+            
             loadBook(bookId);
             if(!myBooks.includes(bookId)) {
                 myBooks.push(bookId);
-                localStorage.setItem('riyad_lib_v100', JSON.stringify(myBooks));
+                localStorage.setItem('riyad_lib_vCounter', JSON.stringify(myBooks));
             }
         } else {
-            // আইডি না থাকলে লাইব্রেরি দেখাও, প্রিভিউ হাইড করো
             showPanel('libPanel', document.getElementById('tab-lib'), false);
         }
         renderLibrary();
         if(urlParams.has('view')) document.body.classList.add('view-mode');
     }
 
-    // New logic: showPreview parameter controls the viewer
     function showPanel(id, el, showPreview) {
         document.querySelectorAll('.panel-container, .tab').forEach(x => x.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
-        
-        const viewer = document.getElementById('viewerArea');
-        if(showPreview) {
-            viewer.classList.add('active');
-        } else {
-            viewer.classList.remove('active');
-        }
+        document.getElementById('viewerArea').classList.toggle('active', showPreview);
     }
 
-    function paginateText(text, limit = 300) {
+    function paginateText(text, limit = 250) {
         const pages = [];
         let currentPos = 0;
         while (currentPos < text.length) {
             let chunk = text.substr(currentPos, limit);
             let lastSpace = chunk.lastIndexOf(" ");
-            if (lastSpace > limit * 0.8 && currentPos + limit < text.length) {
+            if (lastSpace > limit * 0.7 && currentPos + limit < text.length) {
                 chunk = chunk.substr(0, lastSpace);
             }
             pages.push(chunk);
@@ -161,6 +156,11 @@ const firebaseConfig = {
     }
 
     function loadBook(id) {
+        // রিয়েল-টাইমে ভিউ সংখ্যা শোনা
+        db.ref('book_metadata/' + id + '/views').on('value', (snap) => {
+            window.currentViews = snap.val() || 0;
+        });
+
         db.ref('all_books/' + id).on('value', (snap) => {
             const data = snap.val();
             const container = document.getElementById('book');
@@ -175,7 +175,7 @@ const firebaseConfig = {
                         div.className = 'page cloud-page';
                         div.id = `page-${i}`;
                         div.style.zIndex = 1000 - i;
-                        div.innerHTML = `<h4 style="margin:0; color:var(--primary); font-size:14px;">${d.title}</h4><hr style="opacity:0.1; margin:10px 0;"><div class="page-content">${contentChunk.replace(/\n/g,'<br>')}</div><small style="position:absolute; bottom:15px; right:20px; opacity:0.5;">Page ${i}</small>`;
+                        div.innerHTML = `<h5 style="margin:0; color:var(--primary); font-size:13px;">${d.title}</h5><hr style="opacity:0.1; margin:5px 0;"><div class="page-content">${contentChunk.replace(/\n/g,'<br>')}</div><small style="position:absolute; bottom:10px; right:15px; opacity:0.4; font-size:10px;">Page ${i}</small>`;
                         container.appendChild(div);
                         i++;
                     });
@@ -185,10 +185,43 @@ const firebaseConfig = {
             end.className = 'page end-page';
             end.id = `page-${i}`;
             end.style.zIndex = 1000 - i;
-            end.innerHTML = `<div style="border:2px solid var(--primary); padding:20px; border-radius:10px;"><h2>THE END</h2><p1>Enigma's Echo</p1><p2><by Riyad</p2></div>`;
+            end.innerHTML = `<div style="border:1px solid var(--primary); padding:15px; border-radius:8px;"><h3>THE END</h3><p style="font-size:12px;">Readers: ${window.currentViews}</p><small>by Riyad</small></div>`;
             container.appendChild(end);
             totalPages = i + 1;
             updateUI();
+        });
+    }
+
+    function renderLibrary() {
+        const list = document.getElementById('libList');
+        list.innerHTML = "";
+        myBooks.forEach(id => {
+            // প্রতিটি বইয়ের ভিউ সংখ্যা ফায়ারবেস থেকে আনা
+            db.ref('book_metadata/' + id + '/views').on('value', (snap) => {
+                const count = snap.val() || 0;
+                let existingItem = document.getElementById('item-' + id);
+                
+                const itemHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="book-name">${id.replace(/_/g, ' ')}</span>
+                        <span class="view-badge">👁️ ${count}</span>
+                    </div>
+                    <div class="book-actions" style="display:flex; gap:5px;">
+                        <button class="btn-sm" style="background:var(--accent)" onclick="location.href='?id=${id}'">Edit</button>
+                        <button class="btn-sm" style="background:var(--success)" onclick="share('${id}')">Share</button>
+                        <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromList('${id}')">Del</button>
+                    </div>`;
+
+                if(existingItem) {
+                    existingItem.innerHTML = itemHTML;
+                } else {
+                    const div = document.createElement('div');
+                    div.id = 'item-' + id;
+                    div.className = 'book-item';
+                    div.innerHTML = itemHTML;
+                    list.appendChild(div);
+                }
+            });
         });
     }
 
@@ -197,32 +230,16 @@ const firebaseConfig = {
         if(name) window.location.href = window.location.pathname + "?id=" + name;
     }
 
-    function renderLibrary() {
-        const list = document.getElementById('libList');
-        list.innerHTML = myBooks.length ? "" : "No books.";
-        myBooks.forEach(id => {
-            list.innerHTML += `
-                <div class="book-item">
-                    <span class="book-name">${id.replace(/_/g, ' ')}</span>
-                    <div class="book-actions">
-                        <button class="btn-sm" style="background:var(--accent)" onclick="location.href='?id=${id}'">Edit/Open</button>
-                        <button class="btn-sm" style="background:var(--success)" onclick="share('${id}')">Share</button>
-                        <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromList('${id}')">Remove</button>
-                    </div>
-                </div>`;
-        });
-    }
-
     function share(id) {
         const link = window.location.origin + window.location.pathname + "?id=" + id + "&view";
-        navigator.clipboard.writeText(link).then(() => alert("Copied!"));
+        navigator.clipboard.writeText(link).then(() => alert("Link Copied!"));
     }
 
     function deleteFromList(id) {
         if(confirm("Remove?")) {
             myBooks = myBooks.filter(b => b !== id);
-            localStorage.setItem('riyad_lib_v100', JSON.stringify(myBooks));
-            renderLibrary();
+            localStorage.setItem('riyad_lib_vCounter', JSON.stringify(myBooks));
+            location.reload();
         }
     }
 
@@ -231,31 +248,17 @@ const firebaseConfig = {
         const c = document.getElementById('pContent').value.trim();
         if(!bookId) return alert("Select a book!");
         if(t && c) {
-            db.ref('all_books/' + bookId).push({ title: t, content: c }).then(() => alert("Saved!"));
+            db.ref('all_books/' + bookId).push({ title: t, content: c }).then(() => { 
+                alert("Saved!"); 
+                document.getElementById('pTitle').value=""; 
+                document.getElementById('pContent').value=""; 
+            });
         }
     }
 
-    function nextPage() {
-        if (currentPage < totalPages - 1) {
-            document.getElementById('flipSound').play();
-            document.getElementById(`page-${currentPage}`).classList.add('flipped');
-            currentPage++;
-            updateUI();
-        }
-    }
-
-    function prevPage() {
-        if (currentPage > 0) {
-            document.getElementById('flipSound').play();
-            currentPage--;
-            document.getElementById(`page-${currentPage}`).classList.remove('flipped');
-            updateUI();
-        }
-    }
-
-    function updateUI() {
-        document.getElementById('pageCounter').innerText = `${currentPage + 1} / ${totalPages}`;
-    }
+    function nextPage() { if (currentPage < totalPages - 1) { document.getElementById('flipSound').play(); document.getElementById(`page-${currentPage}`).classList.add('flipped'); currentPage++; updateUI(); } }
+    function prevPage() { if (currentPage > 0) { document.getElementById('flipSound').play(); currentPage--; document.getElementById(`page-${currentPage}`).classList.remove('flipped'); updateUI(); } }
+    function updateUI() { document.getElementById('pageCounter').innerText = `${currentPage + 1} / ${totalPages}`; }
 
     init();
 </script>
